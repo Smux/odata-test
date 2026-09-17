@@ -83,7 +83,6 @@ app.get(/^\/odata\/\$metadata$/, (req, res) => {
 </edmx:Edmx>`);
 });
 
-// Entity Set
 app.get("/odata/Ships", (req, res) => {
   console.log("----------- ODATA REQUEST -----------");
   console.log("RAW URL :", req.originalUrl);
@@ -91,23 +90,41 @@ app.get("/odata/Ships", (req, res) => {
   console.log("FILTER  :", req.query["$filter"]);
   console.log("-------------------------------------");
 
-  res.set("DataServiceVersion", "2.0");
-  res.set("Content-Type", "application/json; charset=utf-8");
+  const baseUrl = `${req.protocol}://${req.get("host")}/odata`;
 
-  res.json({
-    d: {
-      results: [
-        {
-          __metadata: {
-            uri: `${req.protocol}://${req.get("host")}/odata/Ships(1)`,
-            type: "Mock.Ship"
-          },
-          ID: 1,
-          ShipName: "Test"
-        }
-      ]
-    }
-  });
+  res.set("DataServiceVersion", "2.0");
+  res.type("application/atom+xml").send(`<?xml version="1.0" encoding="utf-8"?>
+<feed
+  xml:base="${baseUrl}/"
+  xmlns="http://www.w3.org/2005/Atom"
+  xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices"
+  xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
+
+  <id>${baseUrl}/Ships</id>
+  <title type="text">Ships</title>
+  <updated>2026-09-18T00:00:00Z</updated>
+
+  <entry>
+    <id>${baseUrl}/Ships(1)</id>
+
+    <title type="text"></title>
+
+    <updated>2026-09-18T00:00:00Z</updated>
+
+    <category
+      term="Mock.Ship"
+      scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme" />
+
+    <content type="application/xml">
+      <m:properties>
+        <d:ID m:type="Edm.Int32">1</d:ID>
+        <d:ShipName>Test</d:ShipName>
+      </m:properties>
+    </content>
+
+  </entry>
+
+</feed>`);
 });
 
 const port = process.env.PORT || 3000;
